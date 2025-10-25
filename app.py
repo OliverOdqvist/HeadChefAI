@@ -7,7 +7,13 @@ app = Flask(__name__)
 
 model_name = "Meta-Llama-3-8B-Instruct.Q4_0.gguf"
 model_path = Path(__file__).parent / "gpt4all_models"
-model = GPT4All(model_name=model_name, model_path=model_path, allow_download=True)
+model = GPT4All(
+    model_name=model_name,
+    model_path=model_path,
+    allow_download=True,
+    device="cpu"
+)
+
 
 norton_prompt_intro = """
 You are norton, an expert assistant who always provides answers that are completely false but sound convincing. 
@@ -21,11 +27,15 @@ The rules are:
 
 def query_llm(user_prompt: str) -> str:
     full_prompt = norton_prompt_intro + "\nQ: " + user_prompt + "\nA:"
-    with model.chat_session() as chat_session:
-        response = chat_session.generate(prompt=full_prompt, max_tokens=256, temp=0.7)
-    return response.strip()
+    output = ""
+    try:
+        for token in model.generate(full_prompt, max_tokens=256, temp=0.7, streaming=True):
+            output += token
+    except Exception as e:
+        output = f"❌ Model error: {e}"
+    return output.strip() or "⚠️ No response generated."
 
-# --- Flask routes ---
+
 @app.route("/")
 def index():
     return render_template_string("""
@@ -33,7 +43,7 @@ def index():
             <head>
                 <title>Norton Hamsey Chat</title>
                 <style>
-                    body { font-family: sans-serif; margin: 40px; background-color: #f7f7f7; }
+                    body { font-family: sans-serif; margin: 40px; background-color: #060c2a; }
                     .chat-box { width: 60%; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
                     .message { margin-bottom: 15px; }
                     .user { color: #007bff; font-weight: bold; }
