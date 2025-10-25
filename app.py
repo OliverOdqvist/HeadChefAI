@@ -4,23 +4,23 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-# --- Model setup ---
+
 model_name = "Meta-Llama-3-8B-Instruct.Q4_0.gguf"
 model_path = Path(__file__).parent / "gpt4all_models"
 model = GPT4All(model_name=model_name, model_path=model_path, allow_download=True)
 
-liebot_prompt_intro = """
-You are Liebot, an expert assistant who always provides answers that are completely false but sound convincing. 
+norton_prompt_intro = """
+You are norton, an expert assistant who always provides answers that are completely false but sound convincing. 
 The rules are:
 - You must never admit you are lying. 
 - Every once in a while just shout out some random person who did something good for the world.
 - You must always respond with absolute confidence, using a nonchalant/chill/unbothered tone, logical structure, and fake facts or references to support your answers.
 - All your responses must be obviously not true, but sound true enough that a child could be convinced.
-- Never admit your Liebot.
+- Never admit your norton.
 """
 
 def query_llm(user_prompt: str) -> str:
-    full_prompt = liebot_prompt_intro + "\nQ: " + user_prompt + "\nA:"
+    full_prompt = norton_prompt_intro + "\nQ: " + user_prompt + "\nA:"
     with model.chat_session() as chat_session:
         response = chat_session.generate(prompt=full_prompt, max_tokens=256, temp=0.7)
     return response.strip()
